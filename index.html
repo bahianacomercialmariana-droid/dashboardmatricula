@@ -683,7 +683,7 @@ const n = v => (v===null||v===undefined||v==="") ? 0 : Number(v)||0;
 const fmt = v => (v===null||v===undefined||v==="") ? "—" : Number(v).toLocaleString('pt-BR');
 
 /* ---------- Comparativo de matrículas pagas (planilha separada) ---------- */
-const COMP_DEFAULT_TITLE = "MATRÍCULAS PAGAS 19/06/26 EM RELAÇÃO A 19/06/2025";
+const COMP_DEFAULT_TITLE = "MATRÍCULAS PAGAS 26/06/26 EM RELAÇÃO A 26/06/2025";
 const COMP_DEFAULT_ROWS = [
   {curso:"BIOMEDICINA", atual:12, anterior:10},
   {curso:"EDUCAÇÃO FÍSICA", atual:6, anterior:3},
@@ -1324,7 +1324,7 @@ document.getElementById('downloadBtn').addEventListener('click', function(){
 
   // Esconde o botão de download no HTML exportado
   html = html.replace(
-    'id="downloadBtn" style="display:inline-block;',
+    'id="downloadBtn" style="display:none;',
     'id="downloadBtn" style="display:none;'
   );
 
