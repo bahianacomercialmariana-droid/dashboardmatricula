@@ -683,7 +683,7 @@ const n = v => (v===null||v===undefined||v==="") ? 0 : Number(v)||0;
 const fmt = v => (v===null||v===undefined||v==="") ? "—" : Number(v).toLocaleString('pt-BR');
 
 /* ---------- Comparativo de matrículas pagas (planilha separada) ---------- */
-const COMP_DEFAULT_TITLE = "MATRÍCULAS PAGAS 26/06/26 EM RELAÇÃO A 26/06/2025";
+const COMP_DEFAULT_TITLE = "MATRÍCULAS PAGAS 19/06/26 EM RELAÇÃO A 19/06/2025";
 const COMP_DEFAULT_ROWS = [
   {curso:"BIOMEDICINA", atual:12, anterior:10},
   {curso:"EDUCAÇÃO FÍSICA", atual:6, anterior:3},
@@ -1294,15 +1294,12 @@ document.getElementById('downloadBtn').addEventListener('click', function(){
   const mtJson  = JSON.stringify(metaData);
   const cmpTitle= JSON.stringify(compData.title || COMP_DEFAULT_TITLE);
 
-  // Lê o HTML da própria página como texto puro
-  const xhr = new XMLHttpRequest();
-  xhr.open('GET', location.href, false); // síncrono
-  xhr.send();
-  let html = xhr.responseText;
+  // Gera o HTML diretamente do DOM atual (sem buscar do servidor)
+  let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 
   // ── Troca RAW_DEFAULT ──────────────────────────────────────────
   html = html.replace(
-    /const RAW_DEFAULT = \[[\.\s\S]*?\];(?=\s*\nconst COMP_DEFAULT_TITLE)/,
+    /const RAW_DEFAULT = \[[\s\S]*?\];(?=\s*\nconst COMP_DEFAULT_TITLE)/,
     'const RAW_DEFAULT = ' + bksJson + ';'
   );
 
@@ -1312,19 +1309,19 @@ document.getElementById('downloadBtn').addEventListener('click', function(){
     'const COMP_DEFAULT_TITLE = ' + cmpTitle + ';'
   );
   html = html.replace(
-    /const COMP_DEFAULT_ROWS = \[[\.\s\S]*?\];(?=\s*\nconst META_DEFAULT_ROWS)/,
+    /const COMP_DEFAULT_ROWS = \[[\s\S]*?\];(?=\s*\nconst META_DEFAULT_ROWS)/,
     'const COMP_DEFAULT_ROWS = ' + JSON.stringify(compData.rows || COMP_DEFAULT_ROWS) + ';'
   );
 
   // ── Troca META_DEFAULT_ROWS ────────────────────────────────────
   html = html.replace(
-    /const META_DEFAULT_ROWS = \[[\.\s\S]*?\];(?=\s*\n\n\/\* -)/,
+    /const META_DEFAULT_ROWS = \[[\s\S]*?\];(?=\s*\n\nfunction)/,
     'const META_DEFAULT_ROWS = ' + mtJson + ';'
   );
 
   // Esconde o botão de download no HTML exportado
   html = html.replace(
-    'id="downloadBtn" style="display:none;',
+    'id="downloadBtn" style="display:inline-block;',
     'id="downloadBtn" style="display:none;'
   );
 
