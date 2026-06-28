@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acompanhamento de Matrícula — Graduação 2026.2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg: #f5f6fa;
+    --bg-soft: #eef0f7;
+    --panel: #ffffff;
+    --panel-border: #e4e6f0;
+    --ink: #1c1f33;
+    --ink-soft: #5b5f78;
+    --ink-faint: #8c90a8;
+
+    --violet: #5b4cf5;
+    --violet-deep: #3f2fd9;
+    --teal: #0fb39c;
+    --amber: #ff9f1c;
+    --coral: #ff5c7a;
+    --blue: #2f7df0;
+    --lime: #92d633;
+
+    --shadow: 0 8px 24px -8px rgba(28,31,51,0.12);
+    --shadow-lg: 0 20px 48px -16px rgba(28,31,51,0.18);
+    --radius: 18px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 100% -10%, rgba(91,76,245,0.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 10%, rgba(15,179,156,0.10), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+
+  h1,h2,h3{font-family:'Sora', sans-serif; margin:0;}
+  .mono{font-family:'JetBrains Mono', monospace;}
+
+  /* ===== HEADER ===== */
+  header{
+    padding:36px 48px 28px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:24px;
+    flex-wrap:wrap;
+  }
+  .brand-eyebrow{
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--violet-deep);
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .brand-eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--teal); box-shadow:0 0 0 4px rgba(15,179,156,0.18);}
+  header h1{font-size:30px; font-weight:800; letter-spacing:-0.02em; color:var(--ink);}
+  header .subtitle{color:var(--ink-soft); font-size:14.5px; margin-top:6px; max-width:560px;}
+
+  .header-actions{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  #fileLabel, .pill-btn{
+    cursor:pointer;
+    border:none;
+    border-radius:12px;
+    padding:13px 20px;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+  }
+  #fileLabel{
+    background:linear-gradient(135deg, var(--violet), var(--violet-deep));
+    color:#fff;
+    box-shadow:0 10px 24px -8px rgba(91,76,245,0.55);
+  }
+  #fileLabel:hover{transform:translateY(-2px); box-shadow:0 14px 30px -8px rgba(91,76,245,0.6);}
+  #fileInput{display:none;}
+  .pill-btn.secondary{
+    background:#fff;
+    color:var(--ink);
+    border:1px solid var(--panel-border);
+  }
+  .pill-btn.secondary:hover{ border-color:var(--violet); color:var(--violet-deep); transform:translateY(-2px); }
+
+  #fileStatus{
+    font-size:12px;
+    color:var(--ink-faint);
+    margin-top:8px;
+    text-align:right;
+  }
+  #fileStatus.ok{color:var(--teal); font-weight:600;}
+  #fileStatus.err{color:var(--coral); font-weight:600;}
+
+  main{padding:0 48px;}
+
+  .section-title{
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+    margin:46px 0 18px;
+  }
+  .section-title .num{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--violet-deep);
+    background:rgba(91,76,245,0.09);
+    padding:5px 10px;
+    border-radius:8px;
+  }
+  .section-title h2{font-size:21px; font-weight:700; letter-spacing:-0.01em;}
+  .section-title .desc{color:var(--ink-faint); font-size:13px; margin-left:auto;}
+
+  /* ===== KPI CARDS ===== */
+  .kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(8, 1fr);
+    gap:14px;
+  }
+  @media(max-width:1400px){ .kpi-grid{grid-template-columns:repeat(5,1fr);} }
+  @media(max-width:900px){ .kpi-grid{grid-template-columns:repeat(3,1fr);} }
+  @media(max-width:560px){ .kpi-grid{grid-template-columns:repeat(2,1fr);} }
+
+  .kpi-card{
+    background:var(--panel);
+    border-radius:16px;
+    padding:18px 16px;
+    border:1px solid var(--panel-border);
+    box-shadow:var(--shadow);
+    position:relative;
+    overflow:hidden;
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .kpi-card:hover{ transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+  .kpi-card::before{
+    content:"";
+    position:absolute; top:0; left:0; right:0; height:4px;
+    background:var(--accent, var(--violet));
+  }
+  .kpi-card .label{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    margin-bottom:10px;
+    line-height:1.3;
+    min-height:28px;
+  }
+  .kpi-card .value{
+    font-family:'Sora', sans-serif;
+    font-size:30px;
+    font-weight:800;
+    color:var(--ink);
+    letter-spacing:-0.02em;
+  }
+  .kpi-card .sub{
+    font-size:11.5px;
+    color:var(--ink-faint);
+    margin-top:4px;
+  }
+
+  /* ===== PANEL / TABLE ===== */
+  .panel{
+    background:var(--panel);
+    border-radius:var(--radius);
+    border:1px solid var(--panel-border);
+    box-shadow:var(--shadow);
+    padding:8px;
+    margin-bottom:8px;
+  }
+  .table-scroll{overflow-x:auto; border-radius:14px;}
+  table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:920px;
+  }
+  thead th{
+    text-align:left;
+    font-size:10.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:#fff;
+    background:linear-gradient(135deg, var(--violet-deep), var(--violet));
+    padding:13px 14px;
+    white-space:nowrap;
+  }
+  thead th:first-child{border-radius:10px 0 0 10px;}
+  thead th:last-child{border-radius:0 10px 10px 0;}
+  tbody td{
+    padding:12px 14px;
+    font-size:13.5px;
+    color:var(--ink);
+    border-bottom:1px solid var(--bg-soft);
+    white-space:nowrap;
+  }
+  tbody td:first-child{font-weight:600; color:var(--ink);}
+  tbody tr:hover td{background:var(--bg-soft);}
+  tbody tr.total-row td{
+    font-weight:800;
+    background:rgba(91,76,245,0.06);
+    border-top:2px solid var(--violet);
+    border-bottom:none;
+    color:var(--violet-deep);
+  }
+  td.num{font-family:'JetBrains Mono', monospace; font-weight:600; font-size:13px;}
+  td.zero{color:var(--ink-faint); font-weight:400;}
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:3px 9px;
+    border-radius:20px;
+    font-size:11.5px;
+    font-weight:700;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .badge.matric{background:rgba(15,179,156,0.12); color:#0a8c79;}
+  .badge.aberto{background:rgba(255,159,28,0.14); color:#b66c00;}
+  .badge.cancel{background:rgba(255,92,122,0.13); color:#d6364f;}
+
+  /* progress bar mini for conversion rate */
+  .conv-cell{display:flex; align-items:center; gap:8px; min-width:120px;}
+  .conv-bar{flex:1; height:6px; background:var(--bg-soft); border-radius:6px; overflow:hidden;}
+  .conv-bar span{display:block; height:100%; background:linear-gradient(90deg, var(--teal), var(--lime)); border-radius:6px;}
+  .conv-pct{font-family:'JetBrains Mono', monospace; font-size:11.5px; font-weight:700; color:var(--ink-soft); min-width:34px;}
+
+  /* ===== COURSE CARDS ===== */
+  .course-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(330px, 1fr));
+    gap:18px;
+  }
+  .course-card{
+    background:var(--panel);
+    border-radius:var(--radius);
+    border:1px solid var(--panel-border);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .course-card:hover{transform:translateY(-4px); box-shadow:var(--shadow-lg);}
+  .course-head{
+    padding:18px 20px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    border-bottom:1px solid var(--bg-soft);
+  }
+  .course-head h3{font-size:15px; font-weight:700; letter-spacing:-0.01em; line-height:1.3;}
+  .course-tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    font-weight:700;
+    padding:4px 9px;
+    border-radius:20px;
+    white-space:nowrap;
+    color:#fff;
+  }
+  .course-stats{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:0;
+  }
+  .course-stats .stat{
+    padding:14px 12px;
+    text-align:center;
+    border-right:1px solid var(--bg-soft);
+    border-bottom:1px solid var(--bg-soft);
+  }
+  .course-stats .stat:nth-child(3n){border-right:none;}
+  .course-stats .stat .v{font-family:'Sora',sans-serif; font-size:19px; font-weight:800;}
+  .course-stats .stat .l{font-size:9.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-faint); margin-top:3px; font-weight:700;}
+
+  .course-footer{
+    padding:14px 20px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--bg-soft);
+  }
+
+  /* ===== PROGRAM SECTION ===== */
+  .program-banner{
+    background:linear-gradient(120deg, var(--violet-deep) 0%, var(--violet) 55%, var(--teal) 130%);
+    border-radius:var(--radius);
+    padding:30px 34px;
+    color:#fff;
+    box-shadow:0 18px 40px -14px rgba(63,47,217,0.45);
+    display:flex;
+    flex-wrap:wrap;
+    gap:28px;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .program-banner::after{
+    content:"";
+    position:absolute;
+    width:280px; height:280px;
+    background:radial-gradient(circle, rgba(255,255,255,0.16), transparent 70%);
+    top:-100px; right:-60px;
+    border-radius:50%;
+  }
+  .program-banner .ptext{max-width:380px; position:relative; z-index:1;}
+  .program-banner .peyebrow{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; opacity:0.85; margin-bottom:8px;}
+  .program-banner h2{font-size:22px; font-weight:800; line-height:1.25;}
+  .program-banner p{font-size:13px; opacity:0.9; margin-top:8px; line-height:1.5;}
+
+  .program-stats{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    position:relative;
+    z-index:1;
+  }
+  .program-stats .pstat{
+    background:rgba(255,255,255,0.14);
+    backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,0.25);
+    border-radius:14px;
+    padding:14px 20px;
+    min-width:110px;
+    text-align:center;
+  }
+  .program-stats .pstat .v{font-family:'Sora',sans-serif; font-size:24px; font-weight:800;}
+  .program-stats .pstat .l{font-size:10px; text-transform:uppercase; letter-spacing:0.04em; opacity:0.85; margin-top:4px; font-weight:600;}
+
+  /* ===== COMPARATIVO ===== */
+  .comp-summary{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:14px;
+    margin-bottom:18px;
+  }
+  @media(max-width:900px){ .comp-summary{grid-template-columns:repeat(2,1fr);} }
+  .comp-card{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:16px;
+    padding:18px;
+    box-shadow:var(--shadow);
+  }
+  .comp-card .label{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-faint); margin-bottom:8px;}
+  .comp-card .value{font-family:'Sora',sans-serif; font-size:26px; font-weight:800;}
+  .comp-card .value.pos{color:#0a8c79;}
+  .comp-card .value.neg{color:#d6364f;}
+
+  .comp-chart-panel{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:26px 28px 18px;
+    margin-bottom:18px;
+  }
+  .comp-bars{display:flex; flex-direction:column; gap:16px;}
+  .comp-bar-row{display:grid; grid-template-columns:160px 1fr 70px; align-items:center; gap:14px;}
+  .comp-bar-row .course-name{font-size:13px; font-weight:600; color:var(--ink);}
+  .comp-bar-track{position:relative; height:30px; background:var(--bg-soft); border-radius:8px; overflow:hidden;}
+  .comp-bar-fill{
+    position:absolute; top:0; left:0; bottom:0;
+    border-radius:8px;
+    display:flex; align-items:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px; font-weight:700; color:#fff;
+    padding-left:10px;
+    transition:width .5s ease;
+  }
+  .comp-bar-fill.prev{background:#c7cae3; color:#3f435e;}
+  .comp-bar-fill.curr{background:linear-gradient(90deg, var(--violet), var(--teal));}
+  .comp-legend{display:flex; gap:18px; margin-bottom:14px; font-size:12px; color:var(--ink-soft); font-weight:600;}
+  .comp-legend span{display:inline-flex; align-items:center; gap:6px;}
+  .comp-legend i{width:12px; height:12px; border-radius:4px; display:inline-block;}
+  .comp-pct-tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px; font-weight:800;
+    text-align:right;
+    padding:4px 8px;
+    border-radius:8px;
+  }
+  .comp-pct-tag.pos{color:#0a8c79; background:rgba(15,179,156,0.12);}
+  .comp-pct-tag.neg{color:#d6364f; background:rgba(255,92,122,0.13);}
+
+  /* ===== META ===== */
+  .meta-summary{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:14px;
+    margin-bottom:18px;
+  }
+  @media(max-width:900px){ .meta-summary{grid-template-columns:repeat(2,1fr);} }
+  .meta-rows{display:flex; flex-direction:column; gap:14px;}
+  .meta-row{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:14px;
+    padding:16px 20px;
+    display:grid;
+    grid-template-columns:200px 1fr 90px 70px;
+    align-items:center;
+    gap:16px;
+    box-shadow:var(--shadow);
+  }
+  @media(max-width:760px){ .meta-row{grid-template-columns:1fr; gap:8px;} }
+  .meta-row .mr-name{font-family:'Sora',sans-serif; font-weight:700; font-size:14px;}
+  .meta-track{position:relative; height:26px; background:var(--bg-soft); border-radius:8px; overflow:hidden;}
+  .meta-fill{
+    position:absolute; top:0; left:0; bottom:0;
+    border-radius:8px;
+    display:flex; align-items:center; justify-content:flex-end;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px; font-weight:700; color:#fff;
+    padding-right:8px;
+    transition:width .6s ease;
+  }
+  .meta-target-line{
+    position:absolute; top:-3px; bottom:-3px; width:2px;
+    background:var(--ink); opacity:0.55;
+  }
+  .meta-row .mr-vals{font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--ink-soft); text-align:right;}
+  .meta-row .mr-pct{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:800;
+    font-size:14px;
+    text-align:center;
+    padding:6px 0;
+    border-radius:8px;
+  }
+  .meta-row .mr-pct.high{color:#0a8c79; background:rgba(15,179,156,0.12);}
+  .meta-row .mr-pct.mid{color:#b66c00; background:rgba(255,159,28,0.14);}
+  .meta-row .mr-pct.low{color:#d6364f; background:rgba(255,92,122,0.13);}
+
+  footer{
+    text-align:center;
+    color:var(--ink-faint);
+    font-size:12px;
+    margin-top:50px;
+    padding-top:24px;
+    border-top:1px solid var(--panel-border);
+  }
+
+  .toast{
+    position:fixed;
+    bottom:28px; left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--ink);
+    color:#fff;
+    padding:13px 22px;
+    border-radius:12px;
+    font-size:13.5px;
+    font-weight:600;
+    box-shadow:0 14px 30px -10px rgba(0,0,0,0.4);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease;
+    z-index:999;
+    display:flex; align-items:center; gap:10px;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .toast.error{background:var(--coral);}
+  .toast.success{background:var(--teal);}
+
+  ::-webkit-scrollbar{height:8px; width:8px;}
+  ::-webkit-scrollbar-thumb{background:#d2d5e6; border-radius:8px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="brand-eyebrow"><span class="dot"></span>ACOMPANHAMENTO DE MATRÍCULA</div>
+    <h1>Graduação 2026.2</h1>
+    <div class="subtitle">Visão consolidada dos processos seletivos, pagamentos e matrículas — geral, por curso e do programa de formação superior.</div>
+  </div>
+  <div style="display:flex; flex-direction:column; align-items:flex-end;">
+    <div class="header-actions">
+      <button class="pill-btn secondary" id="resetBtn">↺ Restaurar dados originais</button>
+      <label id="fileLabel" for="fileInput">⭱ Atualizar base de dados</label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+      <button id="downloadBtn" style="display:none;padding:8px 18px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.4);">⭳ Baixar para publicar</button>
+      <input type="file" id="compFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
+      <input type="file" id="metaFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
+    </div>
+    <div id="fileStatus">Exibindo dados da planilha enviada · Planilha1</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===================== GERAL ===================== -->
+  <div class="section-title">
+    <span class="num">01</span>
+    <h2>Levantamento Geral</h2>
+    <span class="desc">Todos os cursos consolidados</span>
+  </div>
+  <div class="kpi-grid" id="geralKpis"></div>
+
+  <div class="panel" style="margin-top:18px;">
+    <div class="table-scroll">
+      <table id="geralTable"></table>
+    </div>
+  </div>
+
+  <!-- ===================== POR CURSO ===================== -->
+  <div class="section-title">
+    <span class="num">02</span>
+    <h2>Levantamento por Curso</h2>
+    <span class="desc" id="courseCount"></span>
+  </div>
+  <div class="course-grid" id="courseGrid"></div>
+
+  <!-- ===================== META ===================== -->
+  <div class="section-title">
+    <span class="num">03</span>
+    <h2>Atingimento de Meta</h2>
+    <span class="desc" id="metaDate">Matrículas pagas x meta por curso</span>
+  </div>
+  <div id="metaArea"></div>
+
+  <!-- ===================== COMPARATIVO 2026.2 x 2025.2 ===================== -->
+  <div class="section-title">
+    <span class="num">04</span>
+    <h2>Comparativo de Matrículas Pagas</h2>
+    <span class="desc" id="compDate">2026.2 em relação a 2025.2</span>
+  </div>
+  <div id="compArea"></div>
+
+  <!-- ===================== PROGRAMA ===================== -->
+  <div class="section-title">
+    <span class="num">05</span>
+    <h2>Programa Formação Superior — EAD</h2>
+    <span class="desc">Linha de entrada independente do funil de cursos</span>
+  </div>
+  <div id="programArea"></div>
+
+</main>
+
+<footer>Dashboard gerado a partir da planilha de acompanhamento de matrícula · Atualize a base a qualquer momento pelo botão acima</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================================================================
+   ESTRUTURA DE DADOS DE REFERÊNCIA
+   Colunas: PROC. SELETIVOS, BOLETOS EMITIDOS, PAGOS, EM ABERTO,
+            COM INTERESSE, SEM INTERESSE, CANCELAMENTO, TRANCAMENTO, MATRICULADOS
+   A planilha é organizada em blocos: um título de seção (curso, "GERAL" ou
+   o nome do programa), seguido (opcionalmente) do cabeçalho de colunas,
+   linhas de modalidade de processo seletivo, e uma linha "TOTAL".
+   O nome "PROGRAMA FORMAÇÃO SUPERIOR - EAD" identifica o bloco do programa.
+=================================================================== */
+
+/* ---------- Persistência local (mantém a última atualização ao recarregar a página) ---------- */
+const LS_KEYS = {
+  blocks: 'dash_matriculas_blocks_v2',
+  comp: 'dash_matriculas_comp_v2',
+  meta: 'dash_matriculas_meta_v2',
+  status: 'dash_matriculas_status_v2'
+};
+
+function saveToStorage(key, value){
+  try{ localStorage.setItem(key, JSON.stringify(value)); }
+  catch(e){ console.warn('Não foi possível salvar localmente:', e); }
+}
+function loadFromStorage(key){
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function saveStatusLine(text){
+  saveToStorage(LS_KEYS.status, { text, savedAt: new Date().toISOString() });
+}
+
+const COLS = ["PROC. SELETIVOS","BOLETOS EMITIDOS","PAGOS","EM ABERTO","COM INTERESSE","SEM INTERESSE","CANCELAMENTO","TRANCAMENTO","MATRICULADOS"];
+
+const RAW_DEFAULT = [
+["GERAL"],
+["PROC. SELETIVOS","BOLETOS EMITIDOS","PAGOS","EM ABERTO","COM INTERESSE","SEM INTERESSE","CANCELAMENTO","TRANCAMENTO","MATRICULADOS"],
+["ENEM",67,56,11,7,4,1,null,48],
+["FIES",0,0,0,0,null,null,null,null],
+["PROC. SEL. PRESENCIAL 1ª EDIÇÃO",18,15,3,3,null,null,null,10],
+["PROC. SEL. PRESENCIAL 2ª EDIÇÃO",0,0,0,0,null,null,null,null],
+["PROVA ONLINE",1,0,1,1,null,null,null,0],
+["PORTADOR DE DIPLOMA",3,3,null,null,null,null,null,null],
+["TRANSFERÊNCIA EXTERNA",2,2,null,null,null,null,null,null],
+["TOTAL",91,76,15,11,4,1,null,58],
+[null],
+["BIOMEDICINA"],
+["PROC. SELETIVOS","BOLETOS EMITIDOS","PAGOS","EM ABERTO","COM INTERESSE","SEM INTERESSE","CANCELAMENTO","TRANCAMENTO","MATRICULADOS"],
+["ENEM",12,9,3,2,0,0,null,8],
+["FIES",0,0,0,0,null,null,null,null],
+["PROC. SEL. PRESENCIAL 1ª EDIÇÃO",4,3,1,1,null,null,null,1],
+["PROC. SEL. PRESENCIAL 2ª EDIÇÃO",0,0,0,0,null,null,null,null],
+["PORTADOR DE DIPLOMA",0,0,null,null,null,null,null,null],
+["TRANSFERÊNCIA EXTERNA",0,0,null,null,null,null,null,null],
+["TOTAL",16,12,4,3,0,0,null,9],
+[null],
+["EDUCAÇÃO FÍSICA"],
+["PROC. SELETIVOS","BOLETOS EMITIDOS","PAGOS","EM ABERTO","COM INTERESSE","SEM INTERESSE","CANCELAMENTO","TRANCAMENTO","MATRICULADOS"],
+["ENEM",6,6,0,0,0,0,null,6],
+["FIES",0,0,0,0,null,null,null,null],
+["PROC. SEL. PRESENCIAL 1ª EDIÇÃO",0,0,0,0,null,null,null,0],
+["PROC. SEL. PRESENCIAL 2ª EDIÇÃO",0,0,0,0,null,null,null,null],
+["PORTADOR DE DIPLOMA",0,0,null,null,null,null,null,null],
+["TRANSFERÊNCIA EXTERNA",0,0,null,null,null,null,null,null],
+["TOTAL",6,6,0,0,0,0,null,6],
+[null],
+["ENFERMAGEM"],
+["PROC. SELETIVOS","BOLETOS EMITIDOS","PAGOS","EM ABERTO","COM INTERESSE","SEM INTERESSE","CANCELAMENTO","TRANCAMENTO","MATRICULADOS"],
+["ENEM",15,12,3,2,0,0,null,12],
+["FIES",0,0,0,0,null,null,null,null],
+["PROC. SEL. PRESENCIAL 1ª EDIÇÃO",1,0,1,1,null,null,null,0],
+["PROC. SEL. PRESENCIAL 2ª EDIÇÃO",0,0,0,0,null,null,null,null],
+["PORTADOR DE DIPLOMA",0,0,null,null,null,null,null,null],
+["TRANSFERÊNCIA EXTERNA",1,1,null,null,null,null,null,null],
+["TOTAL",17,13,4,3,0,0,null,12],
+[null],
+["FISIOTERAPIA"],
+["PROC. SELETIVOS","BOLETOS EMITIDOS","PAGOS","EM ABERTO","COM INTERESSE","SEM INTERESSE","CANCELAMENTO","TRANCAMENTO","MATRICULADOS"],
+["ENEM",6,5,1,1,0,0,null,2],
+["FIES",0,0,0,0,null,null,null,null],
+["PROC. SEL. PRESENCIAL 1ª EDIÇÃO",4,4,0,0,null,null,null,4],
+["PROC. SEL. PRESENCIAL 2ª EDIÇÃO",0,0,0,0,null,null,null,null],
+["PORTADOR DE DIPLOMA",1,1,null,null,null,null,null,null],
+["TRANSFERÊNCIA EXTERNA",1,1,null,null,null,null,null,null],
+["TOTAL",12,11,1,1,0,0,null,6],
+[null],
+["ODONTOLOGIA"],
+["ENEM",15,12,3,1,2,0,null,10],
+["FIES",0,0,0,0,null,null,null,null],
+["PROC. SEL. PRESENCIAL 1ª EDIÇÃO",6,6,0,0,null,null,null,3],
+["PROC. SEL. PRESENCIAL 2ª EDIÇÃO",0,0,0,0,null,null,null,null],
+["PORTADOR DE DIPLOMA",1,1,null,null,null,null,null,null],
+["TRANSFERÊNCIA EXTERNA",0,0,null,null,null,null,null,null],
+["TOTAL",22,19,3,1,2,0,null,13],
+[null],
+["PSICOLOGIA"],
+["PROC. SELETIVOS","BOLETOS EMITIDOS","PAGOS","EM ABERTO","COM INTERESSE","SEM INTERESSE","CANCELAMENTO","TRANCAMENTO","MATRICULADOS"],
+["ENEM",13,12,1,1,0,1,null,10],
+["FIES",0,0,0,0,null,null,null,null],
+["PROC. SEL. PRESENCIAL 1ª EDIÇÃO",3,2,0,1,null,null,null,2],
+["PROC. SEL. PRESENCIAL 2ª EDIÇÃO",0,0,0,0,null,null,null,null],
+["TOTAL",16,14,1,2,0,1,null,12],
+[null],
+["INFORMATICA EM SAUDE EAD"],
+["PROC. SELETIVOS","BOLETOS EMITIDOS","PAGOS","EM ABERTO","COM INTERESSE","SEM INTERESSE","CANCELAMENTO","TRANCAMENTO","MATRICULADOS"],
+["ENEM",0,0,0,0,0,0,null,0],
+["PROVA ONLINE",1,0,1,1,null,null,null,0],
+["PORTADOR DE DIPLOMA",1,1,null,null,null,null,null,null],
+["TOTAL",2,1,1,1,0,0,null,0],
+[null],
+["PROGRAMA FORMAÇÃO SUPERIOR - EAD"],
+["PROC. SELETIVOS","BOLETOS EMITIDOS","PAGOS","EM ABERTO","COM INTERESSE","SEM INTERESSE","CANCELAMENTO","TRANCAMENTO","MATRICULADOS"],
+["PROGRAMA FORMAÇÃO SUPERIOR INF. EM SAÚDE - EAD",20,18,2,2,0,0,0,11],
+["TOTAL",20,18,2,2,0,0,0,11]
+];
+
+const ACCENTS = ["#5b4cf5","#0fb39c","#ff9f1c","#2f7df0","#ff5c7a","#7c5cff","#1ab78f","#e0a800"];
+function accentFor(i){ return ACCENTS[i % ACCENTS.length]; }
+const n = v => (v===null||v===undefined||v==="") ? 0 : Number(v)||0;
+const fmt = v => (v===null||v===undefined||v==="") ? "—" : Number(v).toLocaleString('pt-BR');
+
+/* ---------- Comparativo de matrículas pagas (planilha separada) ---------- */
+const COMP_DEFAULT_TITLE = "MATRÍCULAS PAGAS 19/06/26 EM RELAÇÃO A 19/06/2025";
+const COMP_DEFAULT_ROWS = [
+  {curso:"BIOMEDICINA", atual:12, anterior:10},
+  {curso:"EDUCAÇÃO FÍSICA", atual:6, anterior:3},
+  {curso:"ENFERMAGEM", atual:13, anterior:3},
+  {curso:"FISIOTERAPIA", atual:11, anterior:3},
+  {curso:"INFORMÁTICA EM SAÚDE", atual:1, anterior:3},
+  {curso:"ODONTOLOGIA", atual:19, anterior:5},
+  {curso:"PSICOLOGIA", atual:13, anterior:22},
+];
+
+function parseCompRows(rows){
+  let title = COMP_DEFAULT_TITLE;
+  const out = [];
+  let headerSeen = false;
+  for(const r of rows){
+    if(!r || r.every(c=>c===null||c===undefined||c==="")) continue;
+    const c0 = (r[0]??"").toString().trim();
+    if(!c0) continue;
+    if(!headerSeen){
+      if(c0.toUpperCase() === "CURSO"){ headerSeen = true; continue; }
+      const othersEmpty = r.slice(1).every(c=>c===null||c===undefined||c==="");
+      if(othersEmpty){ title = c0; continue; }
+    }
+    if(c0.toUpperCase() === "TOTAL") continue;
+    const atual = Number(r[1])||0;
+    const anterior = Number(r[2])||0;
+    out.push({curso:c0, atual, anterior});
+  }
+  return {title, rows: out};
+}
+
+function isValidCompData(d){
+  if(!d || !Array.isArray(d.rows) || d.rows.length===0) return false;
+  return d.rows.every(r =>
+    r && typeof r.curso === "string" &&
+    r.curso.trim().toUpperCase() !== "CURSO" &&
+    r.curso.trim().length < 60 &&
+    Number.isFinite(r.atual) && Number.isFinite(r.anterior)
+  );
+}
+
+let compData = loadFromStorage(LS_KEYS.comp);
+if(!isValidCompData(compData)){
+  compData = { title: COMP_DEFAULT_TITLE, rows: COMP_DEFAULT_ROWS };
+}
+
+function renderComparativo(comp){
+  const host = document.getElementById('compArea');
+  const rows = comp.rows;
+  const totalAtual = rows.reduce((s,r)=>s+r.atual,0);
+  const totalAnterior = rows.reduce((s,r)=>s+r.anterior,0);
+  const diffTotal = totalAtual - totalAnterior;
+  const pctTotal = totalAnterior>0 ? (diffTotal/totalAnterior*100) : (totalAtual>0?100:0);
+  const cresceu = rows.filter(r=>r.atual>r.anterior).length;
+  const maxVal = Math.max(...rows.map(r=>Math.max(r.atual,r.anterior)), 1);
+
+  document.getElementById('compDate').textContent = comp.title;
+
+  const summaryHtml = `
+    <div class="comp-summary">
+      <div class="comp-card">
+        <div class="label">Matrículas Pagas 2026.2</div>
+        <div class="value">${fmt(totalAtual)}</div>
+      </div>
+      <div class="comp-card">
+        <div class="label">Matrículas Pagas 2025.2</div>
+        <div class="value">${fmt(totalAnterior)}</div>
+      </div>
+      <div class="comp-card">
+        <div class="label">Diferença</div>
+        <div class="value ${diffTotal>=0?'pos':'neg'}">${diffTotal>=0?'+':''}${fmt(diffTotal)}</div>
+      </div>
+      <div class="comp-card">
+        <div class="label">Variação</div>
+        <div class="value ${pctTotal>=0?'pos':'neg'}">${pctTotal>=0?'+':''}${pctTotal.toFixed(1)}%</div>
+      </div>
+    </div>
+  `;
+
+  const barsHtml = rows.map(r=>{
+    const diff = r.atual - r.anterior;
+    const pct = r.anterior>0 ? (diff/r.anterior*100) : (r.atual>0?100:0);
+    const wAtual = (r.atual/maxVal*100).toFixed(1);
+    const wAnterior = (r.anterior/maxVal*100).toFixed(1);
+    return `
+      <div class="comp-bar-row">
+        <div class="course-name">${r.curso}</div>
+        <div>
+          <div class="comp-bar-track" style="margin-bottom:5px;">
+            <div class="comp-bar-fill prev" style="width:${wAnterior}%;">${fmt(r.anterior)}</div>
+          </div>
+          <div class="comp-bar-track">
+            <div class="comp-bar-fill curr" style="width:${wAtual}%;">${fmt(r.atual)}</div>
+          </div>
+        </div>
+        <div class="comp-pct-tag ${pct>=0?'pos':'neg'}">${pct>=0?'+':''}${pct.toFixed(0)}%</div>
+      </div>
+    `;
+  }).join("");
+
+  host.innerHTML = summaryHtml + `
+    <div class="comp-chart-panel">
+      <div class="comp-legend">
+        <span><i style="background:#c7cae3;"></i>2025.2</span>
+        <span><i style="background:linear-gradient(90deg, var(--violet), var(--teal));"></i>2026.2</span>
+        <span style="margin-left:auto; color:var(--ink-faint); font-weight:500;">${cresceu} de ${rows.length} cursos cresceram em relação ao ano anterior</span>
+      </div>
+      <div class="comp-bars">${barsHtml}</div>
+    </div>
+    <div class="panel">
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>CURSO</th><th>2026.2</th><th>2025.2</th><th>DIF</th><th>%</th></tr></thead>
+          <tbody>
+            ${rows.map(r=>{
+              const diff = r.atual-r.anterior;
+              const pct = r.anterior>0 ? (diff/r.anterior*100) : (r.atual>0?100:0);
+              return `<tr><td>${r.curso}</td><td class="num">${fmt(r.atual)}</td><td class="num">${fmt(r.anterior)}</td>
+                <td class="num"><span class="badge ${diff>=0?'matric':'cancel'}">${diff>=0?'+':''}${fmt(diff)}</span></td>
+                <td class="num">${pct>=0?'+':''}${pct.toFixed(1)}%</td></tr>`;
+            }).join("")}
+            <tr class="total-row"><td>TOTAL</td><td class="num">${fmt(totalAtual)}</td><td class="num">${fmt(totalAnterior)}</td>
+              <td class="num">${diffTotal>=0?'+':''}${fmt(diffTotal)}</td><td class="num">${pctTotal>=0?'+':''}${pctTotal.toFixed(1)}%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+renderComparativo(compData);
+
+const compFileInput = document.getElementById('compFileInput');
+compFileInput.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const data = new Uint8Array(ev.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
+      const parsed = parseCompRows(rows);
+      if(parsed.rows.length===0){ throw new Error("vazio"); }
+      compData = parsed;
+      renderComparativo(compData);
+      saveToStorage(LS_KEYS.comp, compData);
+      showToast("Comparativo atualizado com sucesso ✓", "success");
+    }catch(err){
+      console.error(err);
+      showToast("Não foi possível ler o comparativo. Verifique o formato (CURSO | ano atual | ano anterior).", "error");
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+
+/* ---------- Meta de matrículas (planilha separada) ---------- */
+const META_DEFAULT_ROWS = [
+  {curso:"BIOMEDICINA", pagos:13, meta:21},
+  {curso:"EDUCAÇÃO FÍSICA", pagos:6, meta:11},
+  {curso:"ENFERMAGEM", pagos:13, meta:20},
+  {curso:"FISIOTERAPIA", pagos:11, meta:16},
+  {curso:"INFORMÁTICA EM SAÚDE", pagos:2, meta:11},
+  {curso:"ODONTOLOGIA", pagos:20, meta:25},
+  {curso:"PSICOLOGIA", pagos:15, meta:36},
+];
+
+function parseMetaRows(rows){
+  const out = [];
+  let headerSeen = false;
+  for(const r of rows){
+    if(!r || r.every(c=>c===null||c===undefined||c==="")) continue;
+    const c0 = (r[0]??"").toString().trim();
+    if(!c0) continue;
+    if(c0.toUpperCase().includes("CURSO") && isNaN(r[1])){ headerSeen = true; continue; }
+    if(c0.toUpperCase() === "TOTAL") continue;
+    if(c0 instanceof Date) continue;
+    const pagos = Number(r[1])||0;
+    const meta = Number(r[2])||0;
+    if(meta===0 && pagos===0) continue;
+    out.push({curso:c0, pagos, meta});
+  }
+  return out;
+}
+
+let metaData = loadFromStorage(LS_KEYS.meta) || META_DEFAULT_ROWS;
+
+function renderMeta(rows){
+  const host = document.getElementById('metaArea');
+  const totalPagos = rows.reduce((s,r)=>s+r.pagos,0);
+  const totalMeta = rows.reduce((s,r)=>s+r.meta,0);
+  const totalPct = totalMeta>0 ? (totalPagos/totalMeta*100) : 0;
+  const atingiram = rows.filter(r=> r.meta>0 && r.pagos>=r.meta).length;
+  const faltam = totalMeta - totalPagos;
+  const maxVal = Math.max(...rows.map(r=>Math.max(r.pagos,r.meta)), 1);
+
+  function pctClass(p){ return p>=80 ? 'high' : (p>=50 ? 'mid' : 'low'); }
+
+  const summaryHtml = `
+    <div class="meta-summary">
+      <div class="comp-card"><div class="label">Matriculados (pagos)</div><div class="value">${fmt(totalPagos)}</div></div>
+      <div class="comp-card"><div class="label">Meta total</div><div class="value">${fmt(totalMeta)}</div></div>
+      <div class="comp-card"><div class="label">Faltam p/ meta</div><div class="value ${faltam<=0?'pos':'neg'}">${faltam<=0?'Meta batida':fmt(faltam)}</div></div>
+      <div class="comp-card"><div class="label">% Atingimento geral</div><div class="value ${totalPct>=80?'pos':''}">${totalPct.toFixed(1)}%</div></div>
+    </div>
+  `;
+
+  const rowsHtml = rows.map(r=>{
+    const pct = r.meta>0 ? (r.pagos/r.meta*100) : 0;
+    const wPagos = Math.min((r.pagos/maxVal*100), 100).toFixed(1);
+    const wMetaLine = Math.min((r.meta/maxVal*100), 100).toFixed(1);
+    const cls = pctClass(pct);
+    const fillColor = cls==='high' ? 'linear-gradient(90deg, var(--teal), var(--lime))' : (cls==='mid' ? 'linear-gradient(90deg, var(--amber), #ffc46b)' : 'linear-gradient(90deg, var(--coral), #ff8aa0)');
+    return `
+      <div class="meta-row">
+        <div class="mr-name">${r.curso}</div>
+        <div>
+          <div class="meta-track">
+            <div class="meta-fill" style="width:${wPagos}%; background:${fillColor};">${fmt(r.pagos)}</div>
+            <div class="meta-target-line" style="left:${wMetaLine}%;" title="Meta: ${r.meta}"></div>
+          </div>
+        </div>
+        <div class="mr-vals">${fmt(r.pagos)} / ${fmt(r.meta)}</div>
+        <div class="mr-pct ${cls}">${pct.toFixed(0)}%</div>
+      </div>
+    `;
+  }).join("");
+
+  host.innerHTML = summaryHtml + `
+    <div class="comp-chart-panel" style="padding-bottom:8px;">
+      <div class="comp-legend">
+        <span><i style="background:linear-gradient(90deg, var(--teal), var(--lime));"></i>Pagos (barra)</span>
+        <span><i style="background:var(--ink); opacity:0.55; width:3px;"></i>Linha de meta</span>
+        <span style="margin-left:auto; color:var(--ink-faint); font-weight:500;">${atingiram} de ${rows.length} cursos atingiram a meta</span>
+      </div>
+      <div class="meta-rows">${rowsHtml}</div>
+    </div>
+  `;
+}
+renderMeta(metaData);
+
+const metaFileInput = document.getElementById('metaFileInput');
+metaFileInput.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const data = new Uint8Array(ev.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
+      const parsed = parseMetaRows(rows);
+      if(parsed.length===0){ throw new Error("vazio"); }
+      metaData = parsed;
+      renderMeta(metaData);
+      saveToStorage(LS_KEYS.meta, metaData);
+      showToast("Meta atualizada com sucesso ✓", "success");
+    }catch(err){
+      console.error(err);
+      showToast("Não foi possível ler a planilha de meta. Verifique o formato (CURSO | PAGOS | ... | META).", "error");
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+
+/* ---------- Parse raw rows into structured blocks ---------- */
+function parseBlocks(rows){
+  const blocks = [];
+  let current = null;
+  for(const r of rows){
+    if(!r || r.every(c=>c===null||c===undefined||c==="")) continue; // blank line
+    const first = (r[0]??"").toString().trim();
+    if(!first) continue;
+
+    // Detecta linha de cabeçalho de colunas (ex: "PROC. SELETIVOS", "BOLETOS EMITIDOS", ...)
+    const isHeaderRow = first.toUpperCase().includes("PROC. SELETIVOS") &&
+      r.slice(1).some(c => c && c.toString().toUpperCase().includes("BOLETOS"));
+    if(isHeaderRow) continue;
+
+    // Verifica se alguma célula da linha (exceto a primeira) contém número
+    const restNumeric = r.slice(1).some(c => c !== null && c !== undefined && c !== "" && !isNaN(Number(c)));
+
+    if(!restNumeric){
+      // Linha de título de seção (nome do curso, GERAL, programa...)
+      current = { title: first, rows: [], total: null };
+      blocks.push(current);
+      continue;
+    }
+
+    if(!current) continue;
+
+    const dataRow = {
+      modalidade: first,
+      values: COLS.slice(1).map((_,idx)=>{
+        const v = r[idx+1];
+        return (v === undefined || v === null || v === "") ? null : Number(v);
+      })
+    };
+
+    if(first.toUpperCase() === "TOTAL"){
+      current.total = dataRow;
+    } else {
+      current.rows.push(dataRow);
+    }
+  }
+  return blocks;
+}
+
+/* ---------- Render ---------- */
+const savedBlocks = loadFromStorage(LS_KEYS.blocks);
+let blocks = savedBlocks || parseBlocks(RAW_DEFAULT);
+render(blocks);
+
+function render(blocks){
+  const geral = blocks.find(b => b.title.toUpperCase() === "GERAL");
+  const program = blocks.find(b => b.title.toUpperCase().includes("PROGRAMA FORMA"));
+  const courses = blocks.filter(b => b !== geral && b !== program);
+
+  renderGeral(geral);
+  renderCourses(courses);
+  renderProgram(program);
+}
+
+function renderGeral(geral){
+  const kpiHost = document.getElementById('geralKpis');
+  const tableHost = document.getElementById('geralTable');
+  if(!geral || !geral.total){ kpiHost.innerHTML=""; tableHost.innerHTML=""; return; }
+
+  const totals = geral.total.values; // aligned to COLS[1..]
+  const labels = COLS;
+  const allVals = [null, ...totals]; // align with COLS index (col0 has no numeric meaning at geral level -> show count of modalidades)
+  const kpiDefs = [
+    {label:"BOLETOS EMITIDOS", value: totals[0], accent:"#2f7df0"},
+    {label:"PAGOS", value: totals[1], accent:"#0fb39c"},
+    {label:"EM ABERTO", value: totals[2], accent:"#ff9f1c"},
+    {label:"COM INTERESSE", value: totals[3], accent:"#7c5cff"},
+    {label:"SEM INTERESSE", value: totals[4], accent:"#8c90a8"},
+    {label:"CANCELAMENTO", value: totals[5], accent:"#ff5c7a"},
+    {label:"TRANCAMENTO", value: totals[6], accent:"#e0a800"},
+    {label:"MATRICULADOS", value: totals[7], accent:"#1ab78f"},
+  ];
+
+  kpiHost.innerHTML = kpiDefs.map(k => `
+    <div class="kpi-card" style="--accent:${k.accent}">
+      <div class="label">${k.label}</div>
+      <div class="value">${fmt(k.value)}</div>
+      ${k.sub?`<div class="sub">${k.sub}</div>`:""}
+    </div>
+  `).join("");
+
+  let thead = `<thead><tr>${labels.map(l=>`<th>${l}</th>`).join("")}<th>% Conversão</th></tr></thead>`;
+  let tbody = "<tbody>";
+  geral.rows.forEach(r=>{
+    const boletos = n(r.values[0]), matric = n(r.values[7]);
+    const pct = boletos>0 ? Math.round((matric/boletos)*100) : 0;
+    tbody += `<tr><td>${r.modalidade}</td>${r.values.map(v=>`<td class="num ${n(v)===0?'zero':''}">${fmt(v)}</td>`).join("")}
+      <td><div class="conv-cell"><div class="conv-bar"><span style="width:${pct}%"></span></div><span class="conv-pct">${pct}%</span></div></td></tr>`;
+  });
+  if(geral.total){
+    const boletos = n(geral.total.values[0]), matric = n(geral.total.values[7]);
+    const pct = boletos>0 ? Math.round((matric/boletos)*100) : 0;
+    tbody += `<tr class="total-row"><td>TOTAL</td>${geral.total.values.map(v=>`<td class="num">${fmt(v)}</td>`).join("")}
+      <td><div class="conv-cell"><div class="conv-bar"><span style="width:${pct}%"></span></div><span class="conv-pct">${pct}%</span></div></td></tr>`;
+  }
+  tbody += "</tbody>";
+  tableHost.innerHTML = thead + tbody;
+}
+
+function renderCourses(courses){
+  const grid = document.getElementById('courseGrid');
+  document.getElementById('courseCount').textContent = `${courses.length} cursos`;
+  grid.innerHTML = courses.map((c, i)=>{
+    const accent = accentFor(i);
+    const t = c.total ? c.total.values : [0,0,0,0,0,0,0,0];
+    const boletos=n(t[0]), pagos=n(t[1]), aberto=n(t[2]), matric=n(t[7]), cancel=n(t[5]);
+    const pct = boletos>0 ? Math.round((matric/boletos)*100) : 0;
+
+    const rowsHtml = c.rows.map(r=>`
+      <tr><td>${r.modalidade}</td>${r.values.map(v=>`<td class="num ${n(v)===0?'zero':''}">${fmt(v)}</td>`).join("")}</tr>
+    `).join("");
+
+    return `
+    <div class="course-card">
+      <div class="course-head">
+        <h3>${c.title}</h3>
+        <span class="course-tag" style="background:${accent}">${matric} matric.</span>
+      </div>
+      <div class="course-stats">
+        <div class="stat"><div class="v">${fmt(boletos)}</div><div class="l">Boletos</div></div>
+        <div class="stat"><div class="v">${fmt(pagos)}</div><div class="l">Pagos</div></div>
+        <div class="stat"><div class="v">${fmt(aberto)}</div><div class="l">Em aberto</div></div>
+      </div>
+      <details>
+        <summary style="cursor:pointer; list-style:none; padding:10px 20px; font-size:12px; font-weight:700; color:${accent}; border-bottom:1px solid var(--bg-soft);">Ver detalhamento por modalidade ▾</summary>
+        <div class="table-scroll" style="padding:6px 8px;">
+          <table style="min-width:680px;">
+            <thead><tr>${COLS.map(l=>`<th style="background:${accent}; background-image:none;">${l}</th>`).join("")}</tr></thead>
+            <tbody>${rowsHtml}
+            ${c.total?`<tr class="total-row"><td>TOTAL</td>${c.total.values.map(v=>`<td class="num">${fmt(v)}</td>`).join("")}</tr>`:""}
+            </tbody>
+          </table>
+        </div>
+      </details>
+      <div class="course-footer">
+        <div class="conv-cell">
+          <div class="conv-bar"><span style="width:${pct}%; background:linear-gradient(90deg, ${accent}, var(--lime));"></span></div>
+          <span class="conv-pct">${pct}%</span>
+        </div>
+        <span style="font-size:11px; color:var(--ink-faint); margin-left:auto;">conversão boleto → matrícula</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderProgram(program){
+  const host = document.getElementById('programArea');
+  if(!program){ host.innerHTML = `<div class="panel" style="padding:24px; text-align:center; color:var(--ink-faint);">Nenhum dado de programa encontrado na planilha.</div>`; return; }
+  const t = program.total ? program.total.values : [0,0,0,0,0,0,0,0];
+  const items = program.rows.length ? program.rows : (program.total ? [program.total] : []);
+
+  const pStats = [
+    {l:"Boletos emitidos", v:t[0]},
+    {l:"Pagos", v:t[1]},
+    {l:"Em aberto", v:t[2]},
+    {l:"Matriculados", v:t[7]},
+  ];
+
+  host.innerHTML = `
+    <div class="program-banner">
+      <div class="ptext">
+        <div class="peyebrow">Linha de entrada própria</div>
+        <h2>${program.title}</h2>
+        <p>Acompanhamento isolado do funil de boletos, pagamentos e matrículas do programa EAD, fora da contagem geral por curso.</p>
+      </div>
+      <div class="program-stats">
+        ${pStats.map(s=>`<div class="pstat"><div class="v">${fmt(s.v)}</div><div class="l">${s.l}</div></div>`).join("")}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="table-scroll">
+        <table>
+          <thead><tr>${COLS.map(l=>`<th>${l}</th>`).join("")}</tr></thead>
+          <tbody>
+            ${program.rows.map(r=>`<tr><td>${r.modalidade}</td>${r.values.map(v=>`<td class="num ${n(v)===0?'zero':''}">${fmt(v)}</td>`).join("")}</tr>`).join("")}
+            ${program.total?`<tr class="total-row"><td>TOTAL</td>${program.total.values.map(v=>`<td class="num">${fmt(v)}</td>`).join("")}</tr>`:""}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+/* ---------- Upload handling ---------- */
+const fileInput = document.getElementById('fileInput');
+const fileStatus = document.getElementById('fileStatus');
+const toast = document.getElementById('toast');
+
+function showToast(msg, type=""){
+  toast.textContent = msg;
+  toast.className = "toast show " + type;
+  setTimeout(()=> toast.className = "toast", 3000);
+}
+
+fileInput.addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  fileStatus.textContent = "Processando " + file.name + "…";
+  fileStatus.className = "";
+
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const data = new Uint8Array(ev.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+
+      // Tenta cada aba até encontrar uma com blocos válidos
+      let newBlocks = [];
+      let usedSheet = wb.SheetNames[0];
+      for(const sheetName of wb.SheetNames){
+        const ws = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
+        const parsed = parseBlocks(rows);
+        if(parsed.length > 0){
+          newBlocks = parsed;
+          usedSheet = sheetName;
+          break;
+        }
+      }
+
+      if(newBlocks.length === 0){
+        throw new Error("Nenhum bloco reconhecido em nenhuma aba da planilha.");
+      }
+
+      blocks = newBlocks;
+      render(blocks);
+      saveToStorage(LS_KEYS.blocks, blocks);
+
+      // ── Extrai dados das colunas K-O da mesma planilha (meta + comparativo) ──
+      const ws = wb.Sheets[usedSheet];
+      const allRows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null});
+
+      // META: linhas onde col K é nome de curso e col L é PAGOS e col M é META (número)
+      // Na planilha: K=índice 10, L=11, M=12
+      // Linha 1 da planilha (índice 0) tem o título "MINHA META MINHA VIDA" em K
+      // Linha 2 (índice 1) é o cabeçalho CURSO | PAGOS | META | DIF | %
+      // Dados de meta estão nas linhas 3-9 (índices 2-8)
+      // Comparativo começa em linha 12 (índice 11) com título, linha 13 cabeçalho
+      // Dados comparativos: linhas 14-21 (índices 13-20)
+
+      // Separa as duas tabelas laterais: antes e depois do título do comparativo
+      // Detecta onde começa o comparativo (linha com texto longo sem números, após linha 10)
+      let metaSideRows = [];
+      let compSideRows = [];
+      let compStarted = false;
+      for(let i = 0; i < allRows.length; i++){
+        const r = allRows[i];
+        if(!r || r.length < 11) continue;
+        const kVal = r[10];
+        if(kVal === null || kVal === undefined) continue;
+        const kStr = kVal.toString().trim();
+        if(!kStr) continue;
+        // Detecta o título do comparativo: texto longo sem número na col L, após linha 10
+        if(i >= 10 && !compStarted && (r[11] === null || r[11] === undefined || isNaN(Number(r[11])))){
+          compStarted = true;
+        }
+        const row5 = [r[10], r[11], r[12], r[13], r[14]];
+        if(!compStarted){
+          metaSideRows.push(row5);
+        } else {
+          compSideRows.push(row5);
+        }
+      }
+
+      // Processa META — formato: [CURSO, PAGOS, META, DIF, %]
+      const parsedMeta = parseMetaRows(metaSideRows);
+      if(parsedMeta.length > 0){
+        metaData = parsedMeta;
+        renderMeta(metaData);
+        saveToStorage(LS_KEYS.meta, metaData);
+      }
+
+      // Processa COMPARATIVO — o título vem direto da planilha (ex: "MATRÍCULAS PAGAS 26/06/26 EM RELAÇÃO A 26/06/2025")
+      const parsedComp = parseCompRows(compSideRows);
+      if(parsedComp && parsedComp.rows && parsedComp.rows.length > 0){
+        compData = parsedComp;
+        renderComparativo(compData);
+        saveToStorage(LS_KEYS.comp, compData);
+      }
+
+      fileStatus.textContent = "✓ Base, meta e comparativo atualizados: " + file.name + " · aba '" + usedSheet + "'";
+      fileStatus.className = "ok";
+      saveStatusLine(fileStatus.textContent);
+      showToast("Dashboard atualizado ✓  —  clique em '⭳ Baixar para publicar'", "success");
+      const dlBtn = document.getElementById('downloadBtn');
+      dlBtn.style.display = 'inline-block';
+      dlBtn._blocks = newBlocks;
+    }catch(err){
+      console.error(err);
+      fileStatus.textContent = "✗ Erro: " + err.message + " — verifique o formato da planilha.";
+      fileStatus.className = "err";
+      // Não limpa o fileInput para o usuário ver qual arquivo falhou
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  blocks = parseBlocks(RAW_DEFAULT);
+  render(blocks);
+  compData = { title: COMP_DEFAULT_TITLE, rows: COMP_DEFAULT_ROWS };
+  renderComparativo(compData);
+  metaData = META_DEFAULT_ROWS;
+  renderMeta(metaData);
+  localStorage.removeItem(LS_KEYS.blocks);
+  localStorage.removeItem(LS_KEYS.comp);
+  localStorage.removeItem(LS_KEYS.meta);
+  localStorage.removeItem(LS_KEYS.status);
+  fileStatus.textContent = "Exibindo dados originais";
+  fileStatus.className = "";
+  fileInput.value = "";
+  compFileInput.value = "";
+  metaFileInput.value = "";
+  showToast("Dados originais restaurados", "success");
+});
+
+/* Ao carregar a página, mostra a última atualização salva (se houver) */
+(function restoreStatusOnLoad(){
+  const saved = loadFromStorage(LS_KEYS.status);
+  if(saved && saved.text){
+    const when = new Date(saved.savedAt).toLocaleString('pt-BR');
+    fileStatus.textContent = saved.text + " · salvo em " + when;
+    fileStatus.className = "ok";
+  } else if(savedBlocks){
+    fileStatus.textContent = "✓ Exibindo última base atualizada salva neste navegador";
+    fileStatus.className = "ok";
+  }
+})();
+
+/* ── Exporta HTML com dados embutidos para publicar no Netlify ── */
+document.getElementById('downloadBtn').addEventListener('click', function(){
+  const dlBtn   = document.getElementById('downloadBtn');
+  const bks     = dlBtn._blocks || blocks;
+  const bksJson = JSON.stringify(bks);
+  const cmpJson = JSON.stringify(compData);
+  const mtJson  = JSON.stringify(metaData);
+  const cmpTitle= JSON.stringify(compData.title || COMP_DEFAULT_TITLE);
+
+  // Lê o HTML da própria página como texto puro
+  const xhr = new XMLHttpRequest();
+  xhr.open('GET', location.href, false); // síncrono
+  xhr.send();
+  let html = xhr.responseText;
+
+  // ── Troca RAW_DEFAULT ──────────────────────────────────────────
+  html = html.replace(
+    /const RAW_DEFAULT = \[[\.\s\S]*?\];(?=\s*\nconst COMP_DEFAULT_TITLE)/,
+    'const RAW_DEFAULT = ' + bksJson + ';'
+  );
+
+  // ── Troca COMP_DEFAULT_TITLE e COMP_DEFAULT_ROWS ───────────────
+  html = html.replace(
+    /const COMP_DEFAULT_TITLE = [\s\S]*?;(?=\s*\nconst COMP_DEFAULT_ROWS)/,
+    'const COMP_DEFAULT_TITLE = ' + cmpTitle + ';'
+  );
+  html = html.replace(
+    /const COMP_DEFAULT_ROWS = \[[\.\s\S]*?\];(?=\s*\nconst META_DEFAULT_ROWS)/,
+    'const COMP_DEFAULT_ROWS = ' + JSON.stringify(compData.rows || COMP_DEFAULT_ROWS) + ';'
+  );
+
+  // ── Troca META_DEFAULT_ROWS ────────────────────────────────────
+  html = html.replace(
+    /const META_DEFAULT_ROWS = \[[\.\s\S]*?\];(?=\s*\n\n\/\* -)/,
+    'const META_DEFAULT_ROWS = ' + mtJson + ';'
+  );
+
+  // Esconde o botão de download no HTML exportado
+  html = html.replace(
+    'id="downloadBtn" style="display:inline-block;',
+    'id="downloadBtn" style="display:none;'
+  );
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'index.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  showToast("index.html baixado! Arraste no Netlify ✓", "success");
+});
+</script>
+</body>
+</html>
