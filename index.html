@@ -1297,25 +1297,21 @@ document.getElementById('downloadBtn').addEventListener('click', function(){
   // Gera o HTML diretamente do DOM atual (sem buscar do servidor)
   let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 
-  // ── Troca RAW_DEFAULT ──────────────────────────────────────────
+  // ── Substitui cada const usando marcadores únicos que existem no arquivo ──
   html = html.replace(
-    /const RAW_DEFAULT = \[[\s\S]*?\];(?=\s*\nconst COMP_DEFAULT_TITLE)/,
+    /const RAW_DEFAULT = \[[\s\S]*?\];(?=\s*\nconst ACCENTS)/,
     'const RAW_DEFAULT = ' + bksJson + ';'
   );
-
-  // ── Troca COMP_DEFAULT_TITLE e COMP_DEFAULT_ROWS ───────────────
   html = html.replace(
-    /const COMP_DEFAULT_TITLE = [\s\S]*?;(?=\s*\nconst COMP_DEFAULT_ROWS)/,
+    /const COMP_DEFAULT_TITLE = [^;]*;/,
     'const COMP_DEFAULT_TITLE = ' + cmpTitle + ';'
   );
   html = html.replace(
-    /const COMP_DEFAULT_ROWS = \[[\s\S]*?\];(?=\s*\nconst META_DEFAULT_ROWS)/,
+    /const COMP_DEFAULT_ROWS = \[[\s\S]*?\];(?=\s*\nfunction parseCompRows)/,
     'const COMP_DEFAULT_ROWS = ' + JSON.stringify(compData.rows || COMP_DEFAULT_ROWS) + ';'
   );
-
-  // ── Troca META_DEFAULT_ROWS ────────────────────────────────────
   html = html.replace(
-    /const META_DEFAULT_ROWS = \[[\s\S]*?\];(?=\s*\n\nfunction)/,
+    /const META_DEFAULT_ROWS = \[[\s\S]*?\];(?=\s*\nfunction parseMetaRows)/,
     'const META_DEFAULT_ROWS = ' + mtJson + ';'
   );
 
